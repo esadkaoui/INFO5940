@@ -1,10 +1,12 @@
 import streamlit as st
-import fitz  # PyMuPDF for PDF extraction
+import fitz  
+import openai
 from openai import OpenAI
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
@@ -33,7 +35,8 @@ if uploaded_files:
     chunks = [chunk for doc in documents for chunk in text_splitter.split_text(doc)]
 
     # Embedding and storing in FAISS
-    embeddings = OpenAIEmbeddings(api_key=environ['OPENAI_API_KEY'])
+    api_key = environ.get('OPENAI_API_KEY', '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')
+    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
     vector_db = FAISS.from_texts(chunks, embeddings)
 
     st.success(f"✅ {len(uploaded_files)} files processed and indexed successfully!")
