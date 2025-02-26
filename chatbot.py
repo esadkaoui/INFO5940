@@ -1,6 +1,7 @@
 import streamlit as st
 import fitz  
 import openai
+import os
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
@@ -11,7 +12,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 client = OpenAI(
-      api_key="API_KEY_OPENAI"
+    api_key=os.environ.get("OPENAI_API_KEY"),
 )
 
 # Load environment variables from .env file
