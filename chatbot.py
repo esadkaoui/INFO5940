@@ -1,22 +1,29 @@
 import streamlit as st
-import fitz  
+import fitz  # PyMuPDF; ensure you have PyMuPDF installed (pip install PyMuPDF)
 import openai
 import os
-from os import environ
+from dotenv import load_dotenv
+
+# Load environment variables from .env file at the very beginning
+load_dotenv()
+
+# Unset proxy environment variables if they exist
+os.environ.pop("HTTP_PROXY", None)
+os.environ.pop("HTTPS_PROXY", None)
+
+# Check that the API key is available
+if not os.getenv("OPENAI_API_KEY"):
+    raise ValueError("OPENAI_API_KEY is not set. Please add it to your .env file.")
+
+# Set the OpenAI API key for the openai library
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
-from tenacity import retry, stop_after_attempt, wait_fixed
-from dotenv import load_dotenv
 
-from openai import OpenAI
-
-client = OpenAI(
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
-
-# Load environment variables from .env file
-load_dotenv()
+# Initialize embeddings without explicitly passing the API key
+embeddings = OpenAIEmbeddings()
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
@@ -45,7 +52,6 @@ if uploaded_files:
     chunks = [chunk for doc in documents for chunk in text_splitter.split_text(doc)]
 
     # Embedding and storing in FAISS
-    embeddings = OpenAIEmbeddings(openai_api_key=environ.get('OPENAI_API_KEY'))
     vector_db = FAISS.from_texts(chunks, embeddings)
 
     st.success(f"✅ {len(uploaded_files)} files processed and indexed successfully!")
