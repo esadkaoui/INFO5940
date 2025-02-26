@@ -8,6 +8,12 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_fixed
 from dotenv import load_dotenv
 
+from openai import OpenAI
+
+client = OpenAI(
+      api_key="API_KEY_OPENAI"
+)
+
 # Load environment variables from .env file
 load_dotenv()
 
