@@ -2,11 +2,17 @@ import streamlit as st
 import fitz  
 import openai
 from openai import OpenAI
+import os
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_fixed
+
+
+
+os.environ['OPENAI_API_KEY'] ='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'
+
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
@@ -58,4 +64,4 @@ if uploaded_files:
         )
 
         # Display the assistant response
-        st.chat_message("assistant").write(response.choices[0].message["content"])
+        st.chat_message("assistant").write(response.choices[0].message.content)
