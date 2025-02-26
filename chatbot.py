@@ -33,7 +33,7 @@ uploaded_files = st.file_uploader("Upload documents", type=["txt", "pdf"], accep
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from a PDF file."""
-    doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+    doc = fitz.open("pdf", pdf_file.read())
     return "\n".join([page.get_text() for page in doc])
 
 if uploaded_files:
