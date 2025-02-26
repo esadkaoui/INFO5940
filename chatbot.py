@@ -1,18 +1,15 @@
 import streamlit as st
 import fitz  
 import openai
-from openai import OpenAI
-import os
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings.openai import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_fixed
+from dotenv import load_dotenv
 
-
-
-os.environ['OPENAI_API_KEY'] ='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'
-
+# Load environment variables from .env file
+load_dotenv()
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
@@ -41,22 +38,19 @@ if uploaded_files:
     chunks = [chunk for doc in documents for chunk in text_splitter.split_text(doc)]
 
     # Embedding and storing in FAISS
-    api_key = environ.get('OPENAI_API_KEY', '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')
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
+    embeddings = OpenAIEmbeddings(openai_api_key=environ.get('OPENAI_API_KEY'))
     vector_db = FAISS.from_texts(chunks, embeddings)
 
     st.success(f"✅ {len(uploaded_files)} files processed and indexed successfully!")
 
     # Chat Interface
     question = st.chat_input("Ask something about the uploaded documents")
-    
     if question:
         retrieved_chunks = vector_db.similarity_search(question, k=3)
         context = "\n\n".join([chunk.page_content for chunk in retrieved_chunks])
 
-        client = OpenAI(api_key=environ['OPENAI_API_KEY'])
-        response = client.chat.completions.create(
-            model="gpt-4o",
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": f"Use this context: {context}"},
                 {"role": "user", "content": question}
@@ -64,4 +58,4 @@ if uploaded_files:
         )
 
         # Display the assistant response
-        st.chat_message("assistant").write(response.choices[0].message.content)
+        st.chat_message("assistant").write(response.choices[0].message["content"])
