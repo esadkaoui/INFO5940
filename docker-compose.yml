@@ -13,3 +13,5 @@ services:
     volumes:
       - '$HOME/.aws:/root/.aws'
       - '.:/workspace'
+    env_file:
+      - .env
