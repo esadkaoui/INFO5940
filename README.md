@@ -1,188 +1,153 @@
----
 
-# 📌 INFO-5940
+# 📄 Retrieval-Augmented Generation (RAG) Chatbot
 
-Welcome to the **INFO-5940** repository! This guide will help you set up the development environment using **Docker** in **VS Code**, configure the **OpenAI API key**, manage Git branches, and run Jupyter notebooks for assignments.  
-
----
-
-## 🛠️ Prerequisites  
-
-Before starting, ensure you have the following installed on your system:  
-
-- [Docker](https://www.docker.com/get-started) (Ensure Docker Desktop is running)  
-- [VS Code](https://code.visualstudio.com/)  
-- [VS Code Remote - Containers Extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)  
-- [Git](https://git-scm.com/)  
-- OpenAI API Key  
+Welcome to the **Retrieval-Augmented Generation (RAG) Chatbot** repository. This project enables users to upload documents (TXT and PDF), process their content by chunking large files, and interact with that content through a conversational AI interface. The application uses OpenAI’s GPT-4 for generating responses and FAISS for efficient retrieval.
 
 ---
 
-## 🚀 Setup Guide  
+## 🚀 Features
 
-### 1️⃣ Clone the Repository  
+- **File Upload:** Supports both `.txt` and `.pdf` files.
+- **Multiple Document Handling:** Upload and process multiple documents.
+- **PDF Parsing:** Extracts text from PDFs using PyMuPDF with a fallback to PyPDF2.
+- **Efficient Chunking:** Splits large documents into smaller, manageable pieces.
+- **Conversational Chat Interface:** Chat interface for asking questions about the document content.
+- **Vector Search:** Uses FAISS to index and retrieve document chunks.
+- **Docker & Devcontainer:** Pre-configured Docker and VS Code Devcontainer setup for a consistent development environment.
 
-Open a terminal and run:  
+---
+
+## 📂 Project Structure
+
+```
+RAG-Chatbot/
+├── chatbot.py               # Main Streamlit chatbot application
+├── Dockerfile               # Docker container configuration
+├── docker-compose.yml       # Docker Compose configuration
+├── .devcontainer/           # VS Code Devcontainer configuration files
+├── requirements.txt         # Python dependencies
+├── .env.example             # Sample environment file (with placeholder values)
+└── README.md                # This documentation file
+```
+
+---
+
+## 🛠️ Prerequisites
+
+Before running the application, ensure you have the following installed:
+
+- [Docker](https://www.docker.com/get-started) (Docker Desktop must be running)
+- [VS Code](https://code.visualstudio.com/) with the **Remote - Containers Extension**
+- [Git](https://git-scm.com/)
+- [Python 3.9+](https://www.python.org/downloads/)
+- An **OpenAI API Key**
+
+---
+
+## 🔧 Setup Instructions
+
+### 1. Clone the Repository
+
+Open a terminal and run:
 
 ```bash
-git clone https://github.com/AyhamB/INFO-5940.git
-cd INFO-5940
+git clone https://github.com/esadkaoui/INFO5940.git
+cd INFO5940
 ```
 
 ---
 
-### 2️⃣ Open in VS Code with Docker  
+### 2. Configure the Environment
 
-1. Open **VS Code**, navigate to the `INFO-5940` folder.  
-2. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P` on Mac) and search for:  
-   ```
-   Remote-Containers: Reopen in Container
-   ```
-3. Select this option. VS Code will build and open the project inside the container.  
-
-📌 **Note:** If you don’t see this option, ensure that the **Remote - Containers** extension is installed.  
-
----
-
-### 3️⃣ Configure OpenAI API Key  
-
-Since `docker-compose.yml` expects environment variables, follow these steps:  
-
-#### ➤ Option 1: Set the API Key in `.env` (Recommended)  
-
-1. Inside the project folder, create a `.env` file:  
-
-   ```bash
-   touch .env
-   ```
-
-2. Add your API key and base URL:  
-
-   ```plaintext
-   OPENAI_API_KEY=your-api-key-here
-   OPENAI_BASE_URL=https://api.ai.it.cornell.edu/
-   TZ=America/New_York
-   ```
-
-3. Modify `docker-compose.yml` to include this `.env` file:  
-
-   ```yaml
-   version: '3.8'
-   services:
-     devcontainer:
-       container_name: info-5940-devcontainer
-       build:
-         dockerfile: Dockerfile
-         target: devcontainer
-       environment:
-         - OPENAI_API_KEY=${OPENAI_API_KEY}
-         - OPENAI_BASE_URL=${OPENAI_BASE_URL}
-         - TZ=${TZ}
-       volumes:
-         - '$HOME/.aws:/root/.aws'
-         - '.:/workspace'
-       env_file:
-         - .env
-   ```
-
-4. Restart the container:  
-
-   ```bash
-   docker-compose up --build
-   ```
-
-Now, your API key will be automatically loaded inside the container.  
-
----
-
-## 🔀 Managing Git Branches in VS Code  
-
-Since you may need to switch between different branches for assignments, here’s how to manage Git branches in **VS Code** efficiently.  
-
-### **Option 1: Using the Git Panel (Easiest)**
-1. Open **VS Code**.
-2. Click on the **Source Control** panel on the left (`Ctrl+Shift+G` / `Cmd+Shift+G` on Mac).
-3. Click on the **branch name** (bottom-left corner of VS Code).
-4. A dropdown will appear with all available branches.
-5. Select the branch you want to switch to.  
-
-### **Option 2: Using Command Palette**
-1. Open **VS Code**.
-2. Press `Ctrl+Shift+P` (`Cmd+Shift+P` on Mac) to open the **Command Palette**.
-3. Type **"Git: Checkout to..."** and select it.
-4. Pick the branch you want to switch to.
-
-### **Option 3: Using the Terminal**
-If you prefer the command line inside the container, use:
-
-```bash
-git branch   # View all branches
-git checkout branch-name   # Switch to a branch
-git pull origin branch-name   # Update the branch (recommended)
-```
-
-📌 **Tip:** If you are working on a new feature, create a new branch before making changes:
-
-```bash
-git checkout -b new-feature-branch
-```
-
----
-
-## 🏃 Running Jupyter Notebook From Outside VS Code
-
-Once inside the **VS Code Dev Container**, you should be able to run the notebooks from the IDE but you can also launch the Jupyter Notebook server:  
-
-```bash
-jupyter notebook --ip 0.0.0.0 --port=8888 --no-browser --allow-root
-```
-
----
-
-### 5️⃣ Access Jupyter Notebook  
-
-When the notebook starts, it will output a URL like this:  
-
-```
-http://127.0.0.1:8888/?token=your_token_here
-```
-
-Copy and paste this link into your browser to access the Jupyter Notebook interface.  
-
----
-
-## 🛠️ Troubleshooting  
-
-### **Container Fails to Start?**  
-- Ensure **Docker Desktop is running**.  
-- Run `docker-compose up --build` again.  
-- If errors persist, delete existing containers with:  
-
+1. **Create a `.env` File**  
+  In the root directory, create a file named `.env`:
   ```bash
-  docker-compose down
+  touch .env
   ```
+2. **Add Your Environment Variables**  
+  Edit the `.env` file to include:
+  ```plaintext
+  OPENAI_API_KEY=your-api-key-here
+  OPENAI_BASE_URL=https://api.openai.com
+  TZ=America/New_York
+  ```
+3. **Ensure Secrets Are Not Committed**  
+  Your real `.env` file should be excluded by listing it in your `.gitignore`. Use the provided `.env.example` (with placeholder values) to guide users.
 
-  Then restart:  
+---
 
+### 3. Open in VS Code with Docker/Devcontainer
+
+1. Open **VS Code** and navigate to the project folder.
+2. Open the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) and select:
+  ```
+  Remote-Containers: Reopen in Container
+  ```
+3. VS Code will build and open the project inside the container.
+
+---
+
+### 4. Run the Application
+
+#### **Option A: Inside the Devcontainer**
+
+Once inside the container, open a terminal and run:
+
+```bash
+streamlit run chatbot.py
+```
+
+Then, open your browser and go to:  
+`http://localhost:8501`
+
+#### **Option B: Using Docker Compose**
+
+1. Ensure Docker Desktop is running.
+2. In your terminal, run:
   ```bash
   docker-compose up --build
   ```
-
-### **Cannot Access Jupyter Notebook from outside VS Code?**  
-- Ensure you’re using the correct port (`8888`).  
-- Run `docker ps` to check if the container is running.  
-
-### **OpenAI API Key Not Recognized?**  
-- Check if `.env` is correctly created.  
-- Ensure `docker-compose.yml` includes `env_file: - .env`.  
-- Restart the container after making changes (`docker-compose up --build`).  
+3. Open your browser at the provided URL (typically `http://localhost:8501`).
 
 ---
 
-## 🎯 Next Steps  
+## 📜 Usage Instructions
 
-- Complete assignments using the Jupyter Notebook.  
-- Use the **OpenAI API** inside Python scripts within the container.  
-- Switch between **Git branches** as needed for different assignments.  
+1. **Uploading Documents:**  
+  - Click **"Upload documents"** and select one or more `.txt` or `.pdf` files.
+  - The application will process and index the files.
 
-Happy coding! 🚀
+2. **Chat Interface:**  
+  - Enter your question in the chat input.
+  - The chatbot uses the uploaded document content to generate contextually relevant responses.
+  - The final aggregated answer is displayed as a single paragraph.
+
+---
+
+## 🛠️ Troubleshooting
+
+- **PyMuPDF Not Installed Warning:**  
+  If you see a warning about PyMuPDF (fitz) not being installed, install it by running:
+  ```bash
+  pip install pymupdf
+  ```
+
+- **OpenAI API Authentication Error (401):**  
+  Ensure your `.env` file contains the correct API key and that all proxy environment variables are unset:
+  ```bash
+  unset HTTP_PROXY
+  unset HTTPS_PROXY
+  unset http_proxy
+  unset https_proxy
+  ```
+  Also, verify that `openai.proxy = None` is set in your code.
+
+- **Container Issues:**  
+  If the container fails to start:
+  ```bash
+  docker-compose down
+  docker-compose up --build
+  ```
+  Check the container logs for further details.
+
+
