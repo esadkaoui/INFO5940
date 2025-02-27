@@ -3,8 +3,8 @@ import fitz  # PyMuPDF
 import openai
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_fixed
 from dotenv import load_dotenv
 
@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Unset proxy environment variables if they exist
-environ.pop("HTTP_PROXY", None)
-environ.pop("HTTPS_PROXY", None)
+for var in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
+    environ.pop(var, None)
 
 # Check that the API key is available
 if not environ.get("OPENAI_API_KEY"):
@@ -23,7 +23,7 @@ if not environ.get("OPENAI_API_KEY"):
 openai.api_key = environ.get("OPENAI_API_KEY")
 
 # Initialize embeddings with the API key
-embeddings = OpenAIEmbeddings(openai_api_key=environ.get("OPENAI_API_KEY"))
+embeddings = OpenAIEmbeddings() #openai_api_key=environ.get("OPENAI_API_KEY")
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")

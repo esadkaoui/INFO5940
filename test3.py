@@ -1,3 +1,4 @@
-import os
-for var in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
-    os.environ.pop(var, None)
+import os 
+import openai
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.proxy = None  # Explicitly disable proxy usage
