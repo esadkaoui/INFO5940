@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
       target: devcontainer
     environment:
-      OPENAI_API_KEY: <API_KEY>
+      OPENAI_API_KEY: <sk-xIvD5Mw4sc1_owNpoJcO8g>
       OPENAI_BASE_URL: https://api.ai.it.cornell.edu/
       TZ: America/New_York
 
