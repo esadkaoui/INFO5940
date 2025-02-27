@@ -1,34 +1,33 @@
 import streamlit as st
-import fitz  # PyMuPDF
+# import fitz  # PyMuPDF
 import openai
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai.embeddings import OpenAIEmbeddings
 from tenacity import retry, stop_after_attempt, wait_fixed
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Set proxy environment variables if they exist
-http_proxy = environ.get("HTTP_PROXY")
-https_proxy = environ.get("HTTPS_PROXY")
-
-if http_proxy:
-    openai.proxy = {"http": http_proxy}
-if https_proxy:
-    openai.proxy = {"https": https_proxy}
+# Unset proxy environment variables if they exist
+environ.pop("HTTP_PROXY", None)
+environ.pop("HTTPS_PROXY", None)
 
 # Check that the API key is available
-if not environ.get("OPENAI_API_KEY"):
+api_key = environ.get("OPENAI_API_KEY")
+if not api_key:
     raise ValueError("OPENAI_API_KEY is not set. Please add it to your .env file.")
 
+# Print the API key for debugging purposes (remove or mask before sharing logs)
+print(f"OpenAI API Key: {api_key}")
+
 # Set the OpenAI API key for the openai library
-openai.api_key = environ.get("OPENAI_API_KEY")
+openai.api_key = api_key
 
 # Initialize embeddings with the API key
-embeddings = OpenAIEmbeddings(openai_api_key=environ.get("OPENAI_API_KEY"))
+embeddings = OpenAIEmbeddings(openai_api_key=api_key)
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
