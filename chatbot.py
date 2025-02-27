@@ -11,9 +11,14 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Unset proxy environment variables if they exist
-for var in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
-    environ.pop(var, None)
+# Set proxy environment variables if they exist
+http_proxy = environ.get("HTTP_PROXY")
+https_proxy = environ.get("HTTPS_PROXY")
+
+if http_proxy:
+    openai.proxy = {"http": http_proxy}
+if https_proxy:
+    openai.proxy = {"https": https_proxy}
 
 # Check that the API key is available
 if not environ.get("OPENAI_API_KEY"):
@@ -23,7 +28,7 @@ if not environ.get("OPENAI_API_KEY"):
 openai.api_key = environ.get("OPENAI_API_KEY")
 
 # Initialize embeddings with the API key
-embeddings = OpenAIEmbeddings() #openai_api_key=environ.get("OPENAI_API_KEY")
+embeddings = OpenAIEmbeddings(openai_api_key=environ.get("OPENAI_API_KEY"))
 
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
