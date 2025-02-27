@@ -1,5 +1,4 @@
 import streamlit as st
-# import fitz  # PyMuPDF
 import openai
 from os import environ
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -30,7 +29,7 @@ openai.api_key = api_key
 embeddings = OpenAIEmbeddings(openai_api_key=api_key)
 
 # Streamlit UI
-st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
+st.title("📝 File Q&A with OpenAI")
 
 # Upload multiple documents (.txt and .pdf)
 uploaded_files = st.file_uploader("Upload documents", type=["txt", "pdf"], accept_multiple_files=True)
@@ -92,3 +91,52 @@ if uploaded_files:
 
         # Display the assistant's response
         st.chat_message("assistant").write(response.choices[0].message["content"])
+
+# Single file upload for Q&A
+uploaded_file = st.file_uploader("Upload an article", type=("txt", "md"))
+
+question = st.chat_input(
+    "Ask something about the article",
+    disabled=not uploaded_file,
+)
+
+if "messages" not in st.session_state:
+    st.session_state["messages"] = [{"role": "assistant", "content": "Ask something about the article"}]
+
+for msg in st.session_state.messages:
+    st.chat_message(msg["role"]).write(msg["content"])
+
+if question and uploaded_file:
+    # Read the content of the uploaded file
+    file_content = uploaded_file.read().decode("utf-8")
+    print(file_content)
+    
+    # Set the OpenAI API key
+    openai.api_key = environ.get('OPENAI_API_KEY')
+
+    # Set proxy environment variables if they exist
+    http_proxy = environ.get("HTTP_PROXY")
+    https_proxy = environ.get("HTTPS_PROXY")
+
+    if http_proxy:
+        openai.proxy = {"http": http_proxy}
+    if https_proxy:
+        openai.proxy = {"https": https_proxy}
+
+    # Append the user's question to the messages
+    st.session_state.messages.append({"role": "user", "content": question})
+    st.chat_message("user").write(question)
+
+    # Create a completion request to OpenAI
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": f"Use this context: {file_content}"},
+            {"role": "user", "content": question}
+        ]
+    )
+
+    # Append the assistant's response to the messages
+    assistant_response = response.choices[0].message["content"]
+    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+    st.chat_message("assistant").write(assistant_response)
