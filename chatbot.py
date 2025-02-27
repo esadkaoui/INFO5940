@@ -21,6 +21,7 @@ print("API Key loaded:", api_key[:4] + "****" + api_key[-4:])
 
 # Set the OpenAI API key for the openai library
 openai.api_key = api_key
+openai.proxy = None  # Explicitly disable proxy usage
 
 # Initialize embeddings without passing the API key explicitly
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -30,34 +31,35 @@ embeddings = OpenAIEmbeddings()
 
 # Attempt to import PyMuPDF (fitz)
 try:
-    import fitz
+    import fitz  # PyMuPDF
 except ImportError:
-    st.error("PyMuPDF (fitz) is not installed. Please install it if you want PDF extraction via PyMuPDF.")
+    # Log warning to console only; do not show to user.
+    print("Warning: PyMuPDF (fitz) is not installed; PDF extraction will use PyPDF2 instead.")
     fitz = None
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from a PDF file using PyMuPDF first, then fall back to PyPDF2 if needed."""
     try:
-        # Try to get the PDF bytes (Streamlit's UploadedFile is usually BytesIO-like)
+        # Get the PDF bytes
         try:
             pdf_bytes = pdf_file.getvalue()
         except AttributeError:
             pdf_bytes = pdf_file.read()
-
+        
         pdf_stream = BytesIO(pdf_bytes)
         pdf_stream.seek(0)
-
-        # Try PyMuPDF first if available
+        
+        # If PyMuPDF is available, try it first.
         if fitz:
             try:
                 doc = fitz.open(pdf_stream, filetype="pdf")
                 text = "\n".join(page.get_text() for page in doc)
                 if text.strip():
                     return text
-                # If no text extracted, fall back to PyPDF2
             except Exception:
-                pass  # Silently fail and fall back
-
+                # Silently fall back to PyPDF2 if any error occurs.
+                pass
+        
         # Fallback to PyPDF2
         import PyPDF2
         pdf_stream.seek(0)
@@ -77,6 +79,7 @@ def extract_text_from_pdf(pdf_file):
 # Streamlit UI
 st.title("📄 Retrieval-Augmented Generation (RAG) Chatbot")
 
+# Upload multiple documents (.txt and .pdf)
 uploaded_files = st.file_uploader("Upload documents", type=["txt", "pdf"], accept_multiple_files=True)
 
 documents = []
@@ -93,6 +96,10 @@ if uploaded_files:
         documents.append(content)
     
     combined_text = "\n".join(documents)
+    
+    # Optionally, you can hide the raw combined document text from the user:
+    # st.text_area("Documents", combined_text, height=200)
+    
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = [chunk for doc in documents for chunk in text_splitter.split_text(doc)]
     
@@ -107,7 +114,7 @@ if uploaded_files:
         raise e
     
     st.success(f"✅ {len(uploaded_files)} files processed and indexed successfully!")
-
+    
     # Chat Interface
     question = st.chat_input("Ask something about the uploaded documents")
     if question:
