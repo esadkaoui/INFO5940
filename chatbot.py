@@ -3,15 +3,12 @@ import streamlit as st
 import openai
 from dotenv import load_dotenv
 from io import BytesIO
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import OpenAIEmbeddings
 import PyPDF2
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Unset all proxy environment variables 
+# Unset all proxy environment variables (both uppercase and lowercase)
 for var in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
     os.environ.pop(var, None)
 
@@ -20,20 +17,22 @@ api_key = os.environ.get("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY is not set. Please add it to your .env file.")
 
-# Debug: Print masked API key (for verification)
-print("API Key loaded:", api_key[:4] + "****" + api_key[-4:])
-
 # Set the OpenAI API key for the openai library
 openai.api_key = api_key
 
-# Initialize embeddings
+# Initialize embeddings using your API key
+from langchain_community.embeddings import OpenAIEmbeddings
 embeddings = OpenAIEmbeddings(openai_api_key=api_key)
 
 # Streamlit UI
 st.title("📄 RAG Chatbot")
 
 # Upload multiple documents (.txt and .pdf)
-uploaded_files = st.file_uploader("Upload documents (.txt and .pdf)", type=["txt", "pdf"], accept_multiple_files=True)
+uploaded_files = st.file_uploader(
+    "Upload documents (.txt and .pdf)",
+    type=["txt", "pdf"],
+    accept_multiple_files=True
+)
 
 documents = []
 if uploaded_files:
@@ -43,6 +42,7 @@ if uploaded_files:
             documents.append(content)
         elif file.type == "application/pdf":
             pdf_stream = BytesIO(file.read())
+            # First try PyMuPDF (fitz) for extraction
             try:
                 import fitz  # PyMuPDF
                 pdf_document = fitz.open(stream=pdf_stream, filetype="pdf")
@@ -55,7 +55,8 @@ if uploaded_files:
                     continue
             except Exception:
                 pass  # Fall back to PyPDF2
-            
+
+            # Reset stream position and use PyPDF2
             pdf_stream.seek(0)
             reader = PyPDF2.PdfReader(pdf_stream)
             text = ""
@@ -64,16 +65,18 @@ if uploaded_files:
                 if extracted:
                     text += extracted + "\n"
             if not text.strip():
-                raise ValueError("No text extracted using PyMuPDF or PyPDF2.")
+                raise ValueError("No text extracted from PDF.")
             documents.append(text)
 
     # Split documents into chunks
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = []
     for doc in documents:
         chunks.extend(text_splitter.split_text(doc))
 
-    # Create a FAISS vector store from the document chunks
+    # Create a FAISS vector store from the chunks
+    from langchain_community.vectorstores import FAISS
     try:
         vector_db = FAISS.from_texts(chunks, embeddings)
     except Exception as e:
@@ -85,47 +88,42 @@ if uploaded_files:
     # Chat Interface
     question = st.chat_input("Ask something about the uploaded documents")
     if question:
-        # Initialize session messages if not already done
-        if "messages" not in st.session_state:
-            st.session_state["messages"] = [{"role": "assistant", "content": "Hello! How can I help you today?"}]
-        st.session_state.messages.append({"role": "user", "content": question})
-        st.chat_message("user").write(question)
+        # Retrieve the top 5 relevant chunks using the FAISS retriever
+        retriever = vector_db.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+        retrieved_docs = retriever.invoke(question)
         
-        # Retrieve the top 5 relevant chunks using the FAISS index
-        try:
-            relevant_docs = vector_db.similarity_search(question, k=5)
-        except Exception as e:
-            st.error(f"Error during document retrieval: {e}")
-            relevant_docs = []
+        # Format the retrieved documents into context text
+        def format_docs(docs):
+            return "\n\n".join(doc.page_content for doc in docs)
         
-        # Extract text content from the Document objects
-        relevant_texts = [doc.page_content for doc in relevant_docs]
+        context = format_docs(retrieved_docs)
         
-        # Combine the retrieved chunks to form a context
-        context = "\n\n".join(relevant_texts)
+        # Build a prompt template
+        from langchain_core.prompts import PromptTemplate
+        prompt_template = """
+You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question.
+If you don't know the answer, just say that you don't know. Use three sentences maximum and keep the answer concise.
+
+Question: {question}
+
+Context: {context}
+
+Answer:"""
+        prompt = PromptTemplate.from_template(prompt_template)
+        final_prompt = prompt.format(question=question, context=context)
         
-        # Build the prompt for the ChatCompletion API
-        messages = [
-            {"role": "system", "content": "You are an assistant that answers questions based on the provided context. If you don't know the answer, say so."},
-            {"role": "user", "content": f"Context: {context}\n\nQuestion: {question}"}
-        ]
+        # Use ChatOpenAI from langchain.chat_models
+        from langchain.chat_models import ChatOpenAI
+        from langchain_core.messages import HumanMessage
         
-        # Optionally add previous conversation history
-        if st.session_state.messages:
-            # Append only the previous user and assistant messages (if needed)
-            for msg in st.session_state.messages:
-                if msg["role"] != "system":
-                    messages.append(msg)
+        # Initialize the LLM (ChatOpenAI) with the GPT-4 model
+        llm = ChatOpenAI(model="gpt-4", temperature=0.2)
         
-        final_response = ""
-        stream = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=messages,
-            stream=True
-        )
-        for chunk in stream:
-            delta = chunk["choices"][0].get("delta", {})
-            text = delta.get("content", "")
-            final_response += text
-        st.session_state.messages.append({"role": "assistant", "content": final_response})
-        st.chat_message("assistant").write(final_response)
+        # Generate the answer by invoking the LLM with the constructed prompt
+        response = llm.invoke([HumanMessage(content=final_prompt)])
+        
+        # response is an AIMessage object; just extract .content
+        response_text = response.content
+        
+        # Display text
+        st.chat_message("assistant").write(response_text)
