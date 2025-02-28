@@ -1,7 +1,7 @@
 
-# 📄 Retrieval-Augmented Generation (RAG) Chatbot
+# 📄 RAG Chatbot
 
-Welcome to the **Retrieval-Augmented Generation (RAG) Chatbot** repository. This project enables users to upload documents (TXT and PDF), process their content by chunking large files, and interact with that content through a conversational AI interface. The application uses OpenAI’s GPT-4 for generating responses and FAISS for efficient retrieval.
+Welcome to the **RAG Chatbot** repository. This project enables users to upload documents (TXT and PDF), process their content by chunking large files, and interact with that content through a conversational AI interface. The application uses OpenAI’s GPT-4 for generating responses and FAISS for efficient retrieval.
 
 ---
 
