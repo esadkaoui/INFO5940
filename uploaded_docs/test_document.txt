@@ -1,0 +1,9 @@
+Title: The Basics of Machine Learning
+
+Machine Learning (ML) is a branch of artificial intelligence that allows computers to learn from data and make decisions without being explicitly programmed. There are three main types of machine learning:
+
+1. **Supervised Learning** - The model is trained on labeled data. Examples include classification and regression tasks.
+2. **Unsupervised Learning** - The model learns patterns and structures in data without labeled outcomes. Examples include clustering and anomaly detection.
+3. **Reinforcement Learning** - The model learns by receiving rewards and penalties, optimizing for long-term success.
+
+Machine learning is widely used in industries such as healthcare, finance, and marketing to improve decision-making and automation.
